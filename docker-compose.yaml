@@ -1,0 +1,20 @@
+version: "3.8"
+
+services:
+  mqtt-backend:
+    container_name: mqtt-backend
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - be-mqtt-storage:/app/storage
+      - be-mqtt-uploads:/app/uploads
+    environment:
+      - NODE_ENV=production
+      - MQTT_BROKER=mqtt://103.129.150.175:1883
+      - MQTT_USERNAME=upJwQXgl77M7dfnu
+      - MQTT_PASSWORD=7LwYFoFT6vjKUKNv08kzbvP3Ucw55YfF
+
+volumes:
+  be-mqtt-storage:
+  be-mqtt-uploads:
