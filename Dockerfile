@@ -13,11 +13,8 @@ RUN npm install
 # Salin seluruh kode proyek ke dalam container
 COPY . .
 
-# Pastikan folder storage dan uploads ada dan memiliki izin yang cukup
+# Pastikan folder storage ada dan memiliki izin yang cukup
 RUN mkdir -p storage uploads && chmod -R 777 storage uploads
-
-# Deklarasikan volume untuk folder storage dan uploads
-VOLUME ["/app/storage", "/app/uploads"]
 
 # Ekspos port yang digunakan oleh aplikasi
 EXPOSE 3000
