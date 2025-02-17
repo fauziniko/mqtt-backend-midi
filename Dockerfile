@@ -16,6 +16,9 @@ COPY . .
 # Pastikan folder storage ada dan memiliki izin yang cukup
 RUN mkdir -p storage uploads && chmod -R 777 storage uploads
 
+# Deklarasikan volume untuk folder storage
+VOLUME ["/app/storage"]
+
 # Ekspos port yang digunakan oleh aplikasi
 EXPOSE 3000
 
