@@ -1,17 +1,16 @@
 const Minio = require('minio');
+require('dotenv').config();
 
-const endpoint = process.env.MINIO_ENDPOINT || 'minio';
-const useSSL = endpoint.startsWith('https');
-const port = process.env.MINIO_PORT ? Number(process.env.MINIO_PORT) : (useSSL ? 443 : 80);
-const region = process.env.MINIO_REGION || 'jakarta';
+const endpointUrl = new URL(process.env.MINIO_ENDPOINT);
+const useSSL = endpointUrl.protocol === 'https:';
+const port = endpointUrl.port ? parseInt(endpointUrl.port) : (useSSL ? 443 : 80);
 
 const minioClient = new Minio.Client({
-    endPoint: endpoint.replace(/^https?:\/\//, ''),
-    port,
-    useSSL,
-    accessKey: process.env.MINIO_ACCESS_KEY,
-    secretKey: process.env.MINIO_SECRET_KEY,
+  endPoint: endpointUrl.hostname, // gunakan hostname yang benar
+  port: port,
+  useSSL: useSSL,
+  accessKey: process.env.MINIO_ACCESS_KEY,
+  secretKey: process.env.MINIO_SECRET_KEY,
 });
 
-// Export region agar bisa digunakan saat membuat bucket
-module.exports = { minioClient, region };
+module.exports = { minioClient };
