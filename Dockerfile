@@ -1,24 +1,21 @@
 FROM node:18-alpine
 
-# Atur direktori kerja di dalam container
+# Set working directory inside container
 WORKDIR /app
 
-# Salin package.json dan package-lock.json untuk menginstall dependencies
+# Salin file package.json dan package-lock.json agar dependency bisa diinstal terlebih dahulu
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install
+# Install dependencies (gunakan --production jika hanya ingin dependencies runtime)
+RUN npm install --production
 
-# Salin seluruh kode proyek ke dalam container
+# Salin file .env agar environment variables tersedia di container
+COPY .env .env
+
+# Salin seluruh source code
 COPY . .
 
-# Buat folder src/storage dan uploads dengan permission read-write untuk semua user
-RUN mkdir -p src/storage uploads && chmod -R 777 src/storage uploads
-
-# Deklarasikan volume untuk penyimpanan data secara permanen
-VOLUME ["/app/src/storage", "/app/uploads"]
-
-# Ekspos port yang digunakan oleh aplikasi
+# Ekspose port aplikasi
 EXPOSE 3000
 
 # Jalankan aplikasi
