@@ -1,18 +1,15 @@
-const path = require('path');
-const fs = require('fs');
+const { minioClient } = require('../config/minio');
+const bucketName = process.env.MINIO_BUCKET || 'midi-files';
 
 const getMidiFile = (req, res) => {
     const { filename } = req.params;
-    const filePath = path.join(__dirname, '../storage', filename);
-
-    if (!fs.existsSync(filePath)) {
-        return res.status(404).json({ message: 'File not found' });
-    }
-
-    res.download(filePath, filename, (err) => {
+    minioClient.getObject(bucketName, filename, (err, dataStream) => {
         if (err) {
-            res.status(500).json({ message: 'Failed to download MIDI file' });
+            return res.status(404).json({ message: 'File not found', error: err });
         }
+        // Mengatur agar file diunduh dengan nama aslinya
+        res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+        dataStream.pipe(res);
     });
 };
 

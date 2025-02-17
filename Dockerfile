@@ -1,4 +1,3 @@
-# Gunakan Node.js versi terbaru (disarankan LTS)
 FROM node:18-alpine
 
 # Atur direktori kerja di dalam container
@@ -13,7 +12,7 @@ RUN npm install
 # Salin seluruh kode proyek ke dalam container
 COPY . .
 
-# Buat folder src/storage dan uploads dengan permission yang sesuai
+# Buat folder src/storage dan uploads dengan permission read-write untuk semua user
 RUN mkdir -p src/storage uploads && chmod -R 777 src/storage uploads
 
 # Deklarasikan volume untuk penyimpanan data secara permanen

@@ -1,36 +1,58 @@
 const mqtt = require('../config/mqtt');
-const fs = require('fs');
+const { minioClient, region } = require('../config/minio');
 const path = require('path');
 
-const uploadMidiFile = (req, res) => {
+const uploadMidiFile = async (req, res) => {
     if (!req.file) {
         return res.status(400).json({ message: 'No file uploaded' });
     }
 
-    // Tentukan topic berikutnya berdasarkan file di folder storage
-    const storageDir = path.join(__dirname, '../storage');
-    let nextNumber = 1;
-    if (fs.existsSync(storageDir)) {
-        const files = fs.readdirSync(storageDir).filter(file => file.endsWith('.mid'));
-        nextNumber = files.length + 1;
+    const fileName = req.file.originalname;
+    const fileBuffer = req.file.buffer;
+    const bucketName = process.env.MINIO_BUCKET || 'midi-files';
+
+    try {
+        // Cek keberadaan bucket menggunakan listBuckets
+        const buckets = await new Promise((resolve, reject) => {
+            minioClient.listBuckets((err, buckets) => {
+                if (err) return reject(err);
+                resolve(buckets);
+            });
+        });
+        const exists = buckets.some(b => b.name === bucketName);
+
+        if (!exists) {
+            // Jika bucket tidak ada, buat bucket-nya
+            await new Promise((resolve, reject) => {
+                minioClient.makeBucket(bucketName, region, (err) => {
+                    if (err) return reject(err);
+                    resolve();
+                });
+            });
+        }
+        uploadToMinio();
+    } catch (err) {
+        return res.status(500).json({ message: 'Error checking bucket existence', error: err });
     }
 
-    // Format topic: lagu/1, lagu/2, dan seterusnya.
-    const topic = `lagu/${nextNumber}`;
-
-    const fileName = req.file.originalname; // nama asli file tetap digunakan
-    const filePath = req.file.path;
-    const fileBuffer = fs.readFileSync(filePath);
-    const base64Data = fileBuffer.toString('base64');
-
-    // Buat payload dengan judul lagu (nama asli) dan data MIDI
-    const message = JSON.stringify({ title: fileName, data: base64Data });
-    mqtt.publish(topic, message, { qos: 1 }, (err) => {
-        if (err) {
-            return res.status(500).json({ message: 'Failed to publish to MQTT' });
-        }
-        res.status(200).json({ message: `MIDI file uploaded and sent to MQTT with topic ${topic}`, title: fileName });
-    });
+    function uploadToMinio() {
+        minioClient.putObject(bucketName, fileName, fileBuffer, (err, etag) => {
+            if (err) {
+                return res.status(500).json({ message: 'Failed to upload file to MinIO', error: err });
+            }
+            // Buat link bucket dengan menggabungkan MINIO_ENDPOINT, bucketName, dan fileName
+            const bucketLink = `${process.env.MINIO_ENDPOINT}/${bucketName}/${fileName}`;
+            // Gunakan topik dengan satu angka acak setelah "lagu/"
+            const topic = `lagu/${Math.floor(Math.random() * 10)}`;
+            const message = JSON.stringify({ title: fileName, minioBucket: bucketName, etag, bucketLink });
+            mqtt.publish(topic, message, { qos: 1 }, (err) => {
+                if (err) {
+                    return res.status(500).json({ message: 'Failed to publish to MQTT', error: err });
+                }
+                res.status(200).json({ message: `MIDI file uploaded to MinIO and sent to MQTT at topic ${topic}`, title: fileName, bucketLink });
+            });
+        });
+    }
 };
 
 module.exports = { uploadMidiFile };

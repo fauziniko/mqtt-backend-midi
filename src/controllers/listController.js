@@ -1,20 +1,18 @@
-const fs = require('fs');
-const path = require('path');
+const { minioClient } = require('../config/minio');
+const bucketName = process.env.MINIO_BUCKET || 'midi-files';
 
 const listMidiFiles = (req, res) => {
-    const storageDir = path.join(__dirname, '../storage');
+    const objectsStream = minioClient.listObjectsV2(bucketName, '', true);
+    const files = [];
 
-    if (!fs.existsSync(storageDir)) {
-        return res.status(404).json({ message: 'No MIDI files found' });
-    }
-
-    fs.readdir(storageDir, (err, files) => {
-        if (err) {
-            return res.status(500).json({ message: 'Error reading files' });
-        }
-
-        const midiFiles = files.filter(file => file.endsWith('.mid'));
-        res.json({ files: midiFiles });
+    objectsStream.on('data', (obj) => {
+        files.push(obj.name);
+    });
+    objectsStream.on('error', (err) => {
+        return res.status(500).json({ message: 'Error reading MIDI files from MinIO', error: err });
+    });
+    objectsStream.on('end', () => {
+        res.json({ files });
     });
 };
 

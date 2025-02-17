@@ -20,10 +20,16 @@ client.on('connect', () => {
 });
 
 client.on('message', (topic, message) => {
-    // Proses pesan yang masuk pada topic dengan format "lagu/{nomor}"
     if (topic.startsWith('lagu/')) {
         try {
-            const { title, data } = JSON.parse(message.toString());
+            const payload = JSON.parse(message.toString());
+            const { title, data } = payload;
+            
+            if (typeof data !== 'string' || data.trim().length === 0) {
+                console.error('Invalid payload: missing valid "data" property.');
+                return;
+            }
+            
             const midiBuffer = Buffer.from(data, 'base64');
 
             const storageDir = path.join(__dirname, '../storage');
