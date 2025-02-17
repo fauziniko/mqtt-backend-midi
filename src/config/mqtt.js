@@ -12,16 +12,18 @@ const client = mqtt.connect(process.env.MQTT_BROKER, options);
 
 client.on('connect', () => {
     console.log('Connected to MQTT Broker');
-    client.subscribe('midi/upload', { qos: 1 }, (err) => {
+    // Mengganti topik subscribe ke pattern "lagu/+"
+    client.subscribe('lagu/+', { qos: 1 }, (err) => {
         if (err) console.error('Subscription failed:', err);
-        else console.log('Subscribed to topic: midi/upload');
+        else console.log('Subscribed to topic pattern: lagu/+');
     });
 });
 
 client.on('message', (topic, message) => {
-    if (topic === 'midi/upload') {
+    // Proses pesan yang masuk pada topic dengan format "lagu/{nomor}"
+    if (topic.startsWith('lagu/')) {
         try {
-            const { fileName, data } = JSON.parse(message.toString());
+            const { title, data } = JSON.parse(message.toString());
             const midiBuffer = Buffer.from(data, 'base64');
 
             const storageDir = path.join(__dirname, '../storage');
@@ -29,9 +31,10 @@ client.on('message', (topic, message) => {
                 fs.mkdirSync(storageDir, { recursive: true });
             }
 
-            const filePath = path.join(storageDir, fileName);
+            // Simpan file menggunakan judul lagu sebagai nama file
+            const filePath = path.join(storageDir, title);
             fs.writeFileSync(filePath, midiBuffer);
-            console.log(`MIDI file received and saved: ${fileName}`);
+            console.log(`MIDI file received and saved: ${title}`);
         } catch (error) {
             console.error('Error processing MIDI file:', error);
         }
