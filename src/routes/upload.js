@@ -3,8 +3,9 @@ const multer = require('multer');
 const router = express.Router();
 const { uploadMidiFile } = require('../controllers/uploadController');
 
+// Gunakan folder "storage" sebagai tempat penyimpanan file
 const storage = multer.diskStorage({
-    destination: 'uploads/',
+    destination: 'storage/',
     filename: (req, file, cb) => {
         cb(null, file.originalname); // Gunakan nama asli file
     }
