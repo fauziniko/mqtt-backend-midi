@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { listMidiFiles, deleteMidiFile } = require('../controllers/listController');
+const { listMidiFiles, deleteMidiFile, renameMidiFile } = require('../controllers/listController');
 
 /**
  * @swagger
@@ -43,5 +43,39 @@ router.get('/files', listMidiFiles);
  *         description: File not found
  */
 router.delete('/files/:filename', deleteMidiFile);
+
+/**
+ * @swagger
+ * /api/files/{filename}:
+ *   put:
+ *     summary: Rename a MIDI file
+ *     parameters:
+ *       - in: path
+ *         name: filename
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Current name of the MIDI file
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               newFilename:
+ *                 type: string
+ *                 description: New name of the MIDI file
+ *     responses:
+ *       200:
+ *         description: File renamed from old name to new name
+ *       400:
+ *         description: New filename cannot be empty
+ *       404:
+ *         description: File not found
+ *       500:
+ *         description: Failed to copy or remove object in MinIO
+ */
+router.put('/files/:filename', renameMidiFile);
 
 module.exports = router;
