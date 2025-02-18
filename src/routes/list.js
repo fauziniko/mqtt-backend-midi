@@ -1,6 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const { listMidiFiles, deleteMidiFile, renameMidiFile } = require('../controllers/listController');
+const {
+  listMidiFiles,
+  deleteMidiFile,
+  renameMidiFile, // harus sama dengan yang di-export
+  searchMidiFiles, // Import fungsi search
+} = require('../controllers/listController');
+
+console.log('renameMidiFile is:', renameMidiFile); // Lihat di terminal
 
 /**
  * @swagger
@@ -23,6 +30,37 @@ const { listMidiFiles, deleteMidiFile, renameMidiFile } = require('../controller
  *         description: Error reading MIDI files from MinIO
  */
 router.get('/files', listMidiFiles);
+
+/**
+ * @swagger
+ * /api/files/search:
+ *   get:
+ *     summary: Search MIDI files by name
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Query string to match file names
+ *     responses:
+ *       200:
+ *         description: List of files that match the query
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 files:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *       400:
+ *         description: Query parameter "q" is required
+ *       500:
+ *         description: Error reading MIDI files from MinIO
+ */
+router.get('/files/search', searchMidiFiles);
 
 /**
  * @swagger

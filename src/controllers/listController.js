@@ -27,33 +27,28 @@ const deleteMidiFile = (req, res) => {
 };
 
 const renameMidiFile = async (req, res) => {
-    const { filename } = req.params;
-    const { newFilename } = req.body;
+    // ... existing rename logic
+};
 
-    if (!newFilename || !newFilename.trim()) {
-        return res.status(400).json({ message: 'New filename cannot be empty.' });
+const searchMidiFiles = (req, res) => {
+    const searchTerm = req.query.q;
+    if (!searchTerm || !searchTerm.trim()) {
+        return res.status(400).json({ message: 'Query parameter "q" is required for searching.' });
     }
 
-    try {
-        // Pastikan file lama ada
-        await minioClient.statObject(bucketName, filename);
-    } catch (err) {
-        return res.status(404).json({ message: 'File not found', error: err });
-    }
+    const objectsStream = minioClient.listObjectsV2(bucketName, '', true);
+    let files = [];
 
-    // Copy file lama ke nama baru
-    const copySource = `/${bucketName}/${filename}`;
-    minioClient.copyObject(bucketName, newFilename, copySource, (copyErr) => {
-        if (copyErr) {
-            return res.status(500).json({ message: 'Failed to copy object', error: copyErr });
-        }
-        // Hapus file lama
-        minioClient.removeObject(bucketName, filename, (removeErr) => {
-            if (removeErr) {
-                return res.status(500).json({ message: 'Failed to remove old object', error: removeErr });
-            }
-            res.json({ message: `File renamed from ${filename} to ${newFilename}` });
-        });
+    objectsStream.on('data', (obj) => {
+        files.push(obj.name);
+    });
+    objectsStream.on('error', (err) => {
+        return res.status(500).json({ message: 'Error reading MIDI files from MinIO', error: err });
+    });
+    objectsStream.on('end', () => {
+        // Filter file yang mengandung searchTerm
+        const filtered = files.filter((file) => file.toLowerCase().includes(searchTerm.toLowerCase()));
+        res.json({ files: filtered });
     });
 };
 
@@ -61,4 +56,5 @@ module.exports = {
     listMidiFiles,
     deleteMidiFile,
     renameMidiFile,
+    searchMidiFiles,
 };
