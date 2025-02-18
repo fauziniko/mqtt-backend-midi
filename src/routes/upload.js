@@ -7,7 +7,7 @@ const upload = multer();
 
 /**
  * @swagger
- * /api/upload:
+ * /api/files/upload:
  *   post:
  *     summary: Upload MIDI file
  *     requestBody:
@@ -28,6 +28,6 @@ const upload = multer();
  *       500:
  *         description: Failed to upload file to MinIO
  */
-router.post('/upload', upload.single('file'), uploadMidiFile);
+router.post('/files/upload', upload.single('file'), uploadMidiFile);
 
 module.exports = router;
