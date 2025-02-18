@@ -16,4 +16,17 @@ const listMidiFiles = (req, res) => {
     });
 };
 
-module.exports = { listMidiFiles };
+const deleteMidiFile = (req, res) => {
+    const { filename } = req.params;
+
+    minioClient.removeObject(bucketName, filename, (err) => {
+        if (err) {
+            // Misalnya file tidak ada di bucket
+            return res.status(404).json({ message: 'File not found', error: err });
+        }
+        // Jika berhasil
+        res.json({ message: `File ${filename} deleted successfully` });
+    });
+};
+
+module.exports = { listMidiFiles, deleteMidiFile };
