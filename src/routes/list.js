@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { listMidiFiles } = require('../controllers/listController');
+const { listMidiFiles, deleteMidiFile } = require('../controllers/listController');
 
 /**
  * @swagger
@@ -23,5 +23,25 @@ const { listMidiFiles } = require('../controllers/listController');
  *         description: Error reading MIDI files from MinIO
  */
 router.get('/files', listMidiFiles);
+
+/**
+ * @swagger
+ * /api/files/{filename}:
+ *   delete:
+ *     summary: Delete MIDI file
+ *     parameters:
+ *       - in: path
+ *         name: filename
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Name of the MIDI file to delete
+ *     responses:
+ *       200:
+ *         description: File deleted successfully
+ *       404:
+ *         description: File not found
+ */
+router.delete('/files/:filename', deleteMidiFile);
 
 module.exports = router;
